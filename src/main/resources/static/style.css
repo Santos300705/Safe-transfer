@@ -395,6 +395,32 @@ footer {
   gap: 10px;
 }
 
+/* Cards de download */
+.download-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.download-card {
+  background: #fff;
+  border: 1px solid #e1e5eb;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+  color: var(--azul-escuro);
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.download-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+  border-color: var(--azul-principal);
+}
+
 /* Responsividade */
 @media (max-width: 900px) {
   .auth-wrapper { grid-template-columns: 1fr; }

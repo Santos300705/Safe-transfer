@@ -34,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const chaveInput = $('#chave');
   const nomeInput = $('#nome'); // nome que o usuário digita
   const nomeRealInput = $('#nomeReal'); // nome real do banco (readonly)
-  const valorInput = $('#valor');
   const resultado = $('#resultado');
   const historico = $('#listaHistorico');
   const tabs = document.querySelectorAll('.tab-button');
@@ -49,41 +48,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Busca automática do nome ao digitar a chave
-  let debounceId;
-  function debounce(fn, ms = 300) {
-    clearTimeout(debounceId);
-    debounceId = setTimeout(fn, ms);
-  }
-
-  chaveInput.addEventListener('input', () => debounce(buscarNome));
-  chaveInput.addEventListener('blur', buscarNome);
-
-  async function buscarNome() {
-    const chave = chaveInput.value.trim();
-    if (!chave) return;
-    nomeRealInput.value = 'Buscando...';
-    try {
-      const { nomeReal } = await buscarNomePorChave(chave);
-      nomeRealInput.value = nomeReal; // <-- preenche o campo readonly
-    } catch {
-      nomeRealInput.value = '❌ Chave não encontrada';
-    }
-  }
-
   // Validação principal
   pixForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     resultado.textContent = 'Validando...';
     resultado.style.color = '';
+    nomeRealInput.value = '';
 
     const chavePix = chaveInput.value.trim();
     const nomeInformado = nomeInput.value.trim(); // <-- nome digitado pelo usuário
-    const valor = parseFloat(valorInput.value);
     const usuarioId = 1;
 
     try {
-      const resp = await validarPix({ chavePix, nomeInformado, valor, usuarioId });
+      const resp = await validarPix({ chavePix, nomeInformado, usuarioId });
+
+      // Busca o nome real somente após a validação
+      try {
+        const { nomeReal } = await buscarNomePorChave(chavePix);
+        nomeRealInput.value = nomeReal;
+      } catch {
+        nomeRealInput.value = '❌ Chave não encontrada';
+      }
+
       resultado.textContent = `${resp.status} — ${resp.mensagem}`;
       resultado.style.color = resp.status === 'VÁLIDO' ? 'green' : 'red';
 

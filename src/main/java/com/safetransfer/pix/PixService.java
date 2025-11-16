@@ -3,7 +3,6 @@ package com.safetransfer.pix;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -36,24 +35,16 @@ public class PixService {
 
     public PixValidationResponse validar(PixValidationRequest request) {
         String chave = Optional.ofNullable(request.chavePix()).map(String::trim).orElse("");
-        String nomeInformado = Optional.ofNullable(request.nomeInformado()).map(String::trim).orElse("");
 
-        if (chave.isEmpty() || nomeInformado.isEmpty()) {
-            return new PixValidationResponse("INVÁLIDO", "Preencha a chave PIX e o nome informado");
+        if (chave.isEmpty()) {
+            return new PixValidationResponse("INVÁLIDO", "Informe a chave PIX", null);
         }
 
         PixLookupResponse encontrado = buscarPorChave(chave);
         if (encontrado == null) {
-            return new PixValidationResponse("INVÁLIDO", "Chave PIX não encontrada");
+            return new PixValidationResponse("INVÁLIDO", "Chave PIX não encontrada", null);
         }
 
-        boolean coincide = encontrado.nomeReal().toLowerCase(Locale.ROOT)
-                .equals(nomeInformado.toLowerCase(Locale.ROOT));
-
-        if (coincide) {
-            return new PixValidationResponse("VÁLIDO", "Dados conferem. Pode prosseguir.");
-        }
-
-        return new PixValidationResponse("INVÁLIDO", "Nome não confere para esta chave PIX");
+        return new PixValidationResponse("VÁLIDO", "Chave PIX confirmada com sucesso", encontrado.nomeReal());
     }
 }

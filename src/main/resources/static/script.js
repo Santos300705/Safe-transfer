@@ -4,13 +4,6 @@ function $(s) { return document.querySelector(s); }
 async function safeJson(r) { try { return await r.json(); } catch { return null; } }
 
 // ========== API CALLS ==========
-async function buscarNomePorChave(chavePix) {
-  const r = await fetch(`${API_BASE}/pix/${encodeURIComponent(chavePix)}`);
-  const data = await safeJson(r);
-  if (!r.ok) throw new Error(data?.error || 'Chave Pix não encontrada');
-  return data; // {chavePix, nomeReal}
-}
-
 async function validarPix(payload) {
   const r = await fetch(`${API_BASE}/validar-pix`, {
     method: 'POST',
@@ -32,7 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const pixForm = $('#pixForm');
   const chaveInput = $('#chave');
-  const nomeInput = $('#nome'); // nome que o usuário digita
   const nomeRealInput = $('#nomeReal'); // nome real do banco (readonly)
   const resultado = $('#resultado');
   const historico = $('#listaHistorico');
@@ -56,26 +48,19 @@ document.addEventListener('DOMContentLoaded', () => {
     nomeRealInput.value = '';
 
     const chavePix = chaveInput.value.trim();
-    const nomeInformado = nomeInput.value.trim(); // <-- nome digitado pelo usuário
     const usuarioId = 1;
 
     try {
-      const resp = await validarPix({ chavePix, nomeInformado, usuarioId });
+      const resp = await validarPix({ chavePix, usuarioId });
 
-      // Busca o nome real somente após a validação
-      try {
-        const { nomeReal } = await buscarNomePorChave(chavePix);
-        nomeRealInput.value = nomeReal;
-      } catch {
-        nomeRealInput.value = '❌ Chave não encontrada';
-      }
-
+      nomeRealInput.value = resp.nomeReal || '—';
       resultado.textContent = `${resp.status} — ${resp.mensagem}`;
       resultado.style.color = resp.status === 'VÁLIDO' ? 'green' : 'red';
 
       // Adiciona ao histórico
       const li = document.createElement('li');
-      li.textContent = `${new Date().toLocaleString()} → ${chavePix} → ${resp.status}`;
+      const nomeMarcado = resp.nomeReal ? ` (${resp.nomeReal})` : '';
+      li.textContent = `${new Date().toLocaleString()} → ${chavePix}${nomeMarcado} → ${resp.status}`;
       historico.prepend(li);
     } catch (err) {
       resultado.textContent = err.message;

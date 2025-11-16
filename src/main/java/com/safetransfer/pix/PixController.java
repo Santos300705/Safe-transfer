@@ -1,6 +1,5 @@
 package com.safetransfer.pix;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,17 +33,13 @@ public class PixController {
             return ResponseEntity.badRequest().body(new ErrorResponse(errors));
         }
         PixValidationResponse resposta = pixService.validar(request);
-        HttpStatus status = "VÁLIDO".equals(resposta.status()) ? HttpStatus.OK : HttpStatus.UNPROCESSABLE_ENTITY;
-        return ResponseEntity.status(status).body(resposta);
+        return ResponseEntity.ok(resposta);
     }
 
     private List<ValidationError> validarCampos(PixValidationRequest request) {
         List<ValidationError> erros = new ArrayList<>();
         if (request.chavePix() == null || request.chavePix().trim().isEmpty()) {
             erros.add(new ValidationError("chavePix", "Informe a chave PIX"));
-        }
-        if (request.nomeInformado() == null || request.nomeInformado().trim().isEmpty()) {
-            erros.add(new ValidationError("nomeInformado", "Informe o nome para validação"));
         }
         return erros;
     }

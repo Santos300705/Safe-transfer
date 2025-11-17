@@ -6,7 +6,7 @@ WORKDIR /app
 COPY . .
 
 # Se você usa mvnw, troque "mvn" por "./mvnw"
-RUN /.mvnw clean package -DskipTests
+RUN mvn clean package -DskipTests
 
 # Etapa 2: Runtime com JDK leve
 FROM eclipse-temurin:21-jdk-alpine

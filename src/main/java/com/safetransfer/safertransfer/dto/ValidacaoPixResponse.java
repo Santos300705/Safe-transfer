@@ -1,30 +1,41 @@
 package com.safetransfer.safertransfer.dto;
 
-
-
 public class ValidacaoPixResponse {
 
-    private String status;   // "VÁLIDO" | "DIVERGENTE"
-    private String mensagem; // texto para o front
-    private String nomeReal; // titular da chave Pix
+    private String status;
+    private String mensagem;
+    private String nomeReal;
 
-    // === Construtor padrão ===
-    public ValidacaoPixResponse() {}
+    public ValidacaoPixResponse() {
+    }
 
-    // === Construtor de conveniência ===
     public ValidacaoPixResponse(String status, String mensagem, String nomeReal) {
         this.status = status;
         this.mensagem = mensagem;
         this.nomeReal = nomeReal;
     }
 
-    // === Getters/Setters ===
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public String getStatus() {
+        return status;
+    }
 
-    public String getMensagem() { return mensagem; }
-    public void setMensagem(String mensagem) { this.mensagem = mensagem; }
+    public void setStatus(String status) {
+        this.status = status;
+    }
 
-    public String getNomeReal() { return nomeReal; }
-    public void setNomeReal(String nomeReal) { this.nomeReal = nomeReal; }
+    public String getMensagem() {
+        return mensagem;
+    }
+
+    public void setMensagem(String mensagem) {
+        this.mensagem = mensagem;
+    }
+
+    public String getNomeReal() {
+        return nomeReal;
+    }
+
+    public void setNomeReal(String nomeReal) {
+        this.nomeReal = nomeReal;
+    }
 }

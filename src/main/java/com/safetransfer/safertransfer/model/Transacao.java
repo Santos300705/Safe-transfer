@@ -13,7 +13,6 @@ public class Transacao {
     private String chavePix;
     private String nomeInformado;
     private String nomeReal;
-    private Double valor;
     private String statusValidacao; // VÁLIDO ou DIVERGENTE
 
     @ManyToOne
@@ -30,8 +29,6 @@ public class Transacao {
     public void setNomeInformado(String nomeInformado) { this.nomeInformado = nomeInformado; }
     public String getNomeReal() { return nomeReal; }
     public void setNomeReal(String nomeReal) { this.nomeReal = nomeReal; }
-    public Double getValor() { return valor; }
-    public void setValor(Double valor) { this.valor = valor; }
     public String getStatusValidacao() { return statusValidacao; }
     public void setStatusValidacao(String statusValidacao) { this.statusValidacao = statusValidacao; }
     public Usuario getUsuario() { return usuario; }

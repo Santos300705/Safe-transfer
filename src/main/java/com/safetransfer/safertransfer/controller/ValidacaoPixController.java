@@ -5,9 +5,9 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,7 +23,7 @@ import com.safetransfer.safertransfer.service.ValidacaoPixService;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*") // permite o acesso do front-end
+@CrossOrigin(origins = "*")
 public class ValidacaoPixController {
 
     @Autowired
@@ -35,48 +35,66 @@ public class ValidacaoPixController {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    // ============================================
-    // NOVO ENDPOINT: Buscar nome real pela chave Pix
-    // ============================================
+    // GET /api/pix/{chavePix} - opcional
     @GetMapping("/pix/{chavePix}")
     public Map<String, String> buscarNomePorChave(@PathVariable String chavePix) {
         try {
             String nomeReal = validacaoPixService.buscarNomePorChaveObrigatorio(chavePix);
             return Map.of("chavePix", chavePix, "nomeReal", nomeReal);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
 
-    // ============================================
-    // ENDPOINT PRINCIPAL: Validar transação Pix
-    // ============================================
-    @PostMapping("/validar-pix")
-    public ValidacaoPixResponse validar(@Valid @RequestBody ValidacaoPixRequest req) {
-        // Valor > 0 (defesa extra, além do Bean Validation)
-        if (req.getValor() == null || req.getValor() <= 0) {
-            throw new IllegalArgumentException("valor deve ser maior que zero");
+    // POST /api/validar-chave - SÓ chave → nomeReal
+    @PostMapping("/validar-chave")
+    public ValidacaoPixResponse validarChave(@Valid @RequestBody ValidacaoPixRequest req) {
+        String chavePix = req.getChavePix();
+
+        if (chavePix == null || chavePix.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "chavePix é obrigatória");
         }
 
-        // Busca nome real pela chave
-        String nomeReal = validacaoPixService.buscarNomePorChaveObrigatorio(req.getChavePix());
+        try {
+            String nomeReal = validacaoPixService.buscarNomePorChaveObrigatorio(chavePix);
+
+            return new ValidacaoPixResponse(
+                    "OK",
+                    "Nome obtido com sucesso.",
+                    nomeReal
+            );
+        } catch (IllegalArgumentException e) {
+            // aqui convertemos a IllegalArgumentException em 400, não 500
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    // POST /api/validar-pix - fluxo completo (se quiser manter)
+    @PostMapping("/validar-pix")
+    public ValidacaoPixResponse validar(@Valid @RequestBody ValidacaoPixRequest req) {
+
+        String chavePix = req.getChavePix();
+
+        if (chavePix == null || chavePix.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chave Pix obrigatória");
+        }
+
+        String nomeReal = validacaoPixService.buscarNomePorChaveObrigatorio(chavePix);
+
         boolean ok = validacaoPixService.nomesSaoCompativeis(req.getNomeInformado(), nomeReal);
 
-        // Carrega o usuário só se veio ID
         Usuario usuario = null;
         if (req.getUsuarioId() != null) {
             usuario = usuarioRepository.findById(req.getUsuarioId())
                     .orElseThrow(() -> new IllegalArgumentException("usuarioId não encontrado"));
         }
 
-        // Persiste transação
         Transacao t = new Transacao();
-        t.setChavePix(req.getChavePix());
+        t.setChavePix(chavePix);
         t.setNomeInformado(req.getNomeInformado());
         t.setNomeReal(nomeReal);
-        t.setValor(req.getValor());
         t.setStatusValidacao(ok ? "VÁLIDO" : "DIVERGENTE");
-        t.setUsuario(usuario); // pode ser null
+        t.setUsuario(usuario);
         transacaoRepository.save(t);
 
         return new ValidacaoPixResponse(

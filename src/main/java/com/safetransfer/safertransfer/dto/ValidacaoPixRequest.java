@@ -6,24 +6,15 @@ public class ValidacaoPixRequest {
     @Size(max = 120, message = "chavePix não pode ultrapassar 120 caracteres")
     private String chavePix;
 
-    public ValidacaoPixRequest() {
-    }
+    @NotBlank(message = "nomeInformado é obrigatório")
+    @Size(max = 160, message = "nomeInformado não pode ultrapassar 160 caracteres")
+    private String nomeInformado;
 
-    public String getChavePix() {
-        return chavePix;
-    }
+    public ValidacaoPixRequest() {}
 
-    public void setChavePix(String chavePix) {
-        this.chavePix = chavePix;
-    }
+    public String getChavePix() { return chavePix; }
+    public void setChavePix(String chavePix) { this.chavePix = chavePix; }
 
-    public Long getUsuarioId() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getUsuarioId'");
-    }
-
-    public String getNomeInformado() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getNomeInformado'");
-    }
+    public String getNomeInformado() { return nomeInformado; }
+    public void setNomeInformado(String nomeInformado) { this.nomeInformado = nomeInformado; }
 }

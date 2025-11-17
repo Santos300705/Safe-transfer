@@ -1,22 +1,11 @@
 const API_BASE = '/api';
 
-function $(s) {
-  return document.querySelector(s);
-}
+function $(s) { return document.querySelector(s); }
 
 async function safeJson(r) {
-  try {
-    return await r.json();
-  } catch {
-    return null;
-  }
+  try { return await r.json(); } catch { return null; }
 }
 
-// ======== API CALLS ========
-
-// POST /api/validar-pix
-// Body: { chavePix, nomeInformado, usuarioId }
-// Resp: { status, mensagem, nomeReal }
 async function validarPix(payload) {
   const r = await fetch(`${API_BASE}/validar-pix`, {
     method: 'POST',
@@ -43,35 +32,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const pixForm = $('#pixForm');
   const chaveInput = $('#chave');
-  const nomeInput = $('#nome');         // nome digitado pelo usuário
-  const nomeRealInput = $('#nomeReal'); // nome real retornado pelo back
+  const nomeInput = $('#nomeInformado');
+  const nomeRealInput = $('#nomeReal');
   const resultado = $('#resultado');
   const historico = $('#listaHistorico');
-  const tabs = document.querySelectorAll('.tab-button');
 
-  // ----- Tabs (Home / Histórico / Conta) -----
-  tabs.forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(sec => sec.classList.remove('active'));
-      btn.classList.add('active');
-      const tabId = btn.dataset.tab;
-      const tabContent = document.getElementById(tabId);
-      if (tabContent) tabContent.classList.add('active');
-    });
-  });
-
-  // ----- Submit do formulário de validação -----
   pixForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     resultado.textContent = 'Validando...';
     resultado.style.color = '';
-    if (nomeRealInput) nomeRealInput.value = '';
+    nomeRealInput.value = '';
 
     const chavePix = chaveInput.value.trim();
     const nomeInformado = nomeInput.value.trim();
-    const usuarioId = 1; // ajusta se precisar
 
     if (!chavePix) {
       resultado.textContent = 'Informe a chave Pix.';
@@ -80,24 +54,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!nomeInformado) {
-      resultado.textContent = 'Informe o nome que você recebeu.';
+      resultado.textContent = 'Informe o nome.';
       resultado.style.color = 'red';
       return;
     }
 
     try {
-      const resp = await validarPix({ chavePix, nomeInformado, usuarioId });
-      // resp = { status: "VÁLIDO"/"DIVERGENTE", mensagem, nomeReal }
+      const resp = await validarPix({ chavePix, nomeInformado });
+      // resp = { status, mensagem, nomeReal }
 
-      if (nomeRealInput) {
-        nomeRealInput.value = resp.nomeReal || '';
-      }
+      // Preenche o nome real no campo de baixo
+      nomeRealInput.value = resp.nomeReal || '';
 
+      // Mostra status e mensagem
       resultado.textContent = `${resp.status} — ${resp.mensagem}`;
       resultado.style.color =
-        resp.status === 'VÁLIDO' ? 'green' : 'red';
+        resp.status === 'VÁLIDO' ? 'green'
+      : resp.status === 'DIVERGENTE' ? 'red'
+      : 'orange';
 
-      // Histórico
+      // Adiciona ao histórico
       if (historico) {
         const li = document.createElement('li');
         li.textContent = `${new Date().toLocaleString()} → ${chavePix} → ${resp.status}`;

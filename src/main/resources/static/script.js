@@ -1,4 +1,4 @@
-const API_BASE = 'https://safe-transfer-api-1234.onrender.com';
+const API_BASE = '/api';
 
 function $(s) { return document.querySelector(s); }
 

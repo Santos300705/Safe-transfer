@@ -13,7 +13,7 @@ FROM eclipse-temurin:21-jdk-alpine
 
 WORKDIR /app
 
-# copia o JAR gerado na etapa de build
+# copia o JAR gerado na etapa de build gygygygyyygygy
 COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8080

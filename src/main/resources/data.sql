@@ -1,4 +1,4 @@
-INSERT INTO usuarios (id, nome_real, chave_pix)
+INSERT INTO usuarios (nome_completo, email, chave_pix)
 VALUES
   (1, 'Gabriel Silva', 'gabriel.silva@pix.com'),
   (2, 'Mariana Oliveira', 'mariana.oliveira@gmail.com'),

@@ -1,57 +1,54 @@
-console.log("Script carregado e pronto.");
+document.getElementById("pixForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
 
-const form = document.getElementById("pixForm");
-const inputChave = document.getElementById("chave");
-const inputNomeInformado = document.getElementById("nomeInformado");
-const inputNomeReal = document.getElementById("nomeReal");
-const mensagem = document.getElementById("mensagemValidacao");
+    // Pegando os elementos corretamente (baseado no seu HTML)
+    const chavePix = document.getElementById("chave").value.trim();
+    const nomeInformado = document.getElementById("nomeInformado").value.trim();
+    const campoNomeReal = document.getElementById("nomeReal");
+    const resultado = document.getElementById("resultado");
 
-const API_URL = "https://safe-transfer-api-1234.onrender.com/api/validar-pix";
+    // Limpa mensagens anteriores
+    resultado.textContent = "";
+    campoNomeReal.value = "";
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  const chavePix = inputChave.value.trim();
-  const nomeInformado = inputNomeInformado.value.trim();
-
-  mensagem.textContent = "";
-  inputNomeReal.value = "";
-
-  try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        chavePix: chavePix,
-        nomeInformado: nomeInformado
-      })
-    });
-
-    const data = await response.json();
-
-    // Se vier nomeReal, preenche o campo
-    if (data.nomeReal) {
-      inputNomeReal.value = data.nomeReal;
+    // Validação básica
+    if (!chavePix || !nomeInformado) {
+        resultado.textContent = "Preencha todos os campos antes de validar.";
+        resultado.style.color = "red";
+        return;
     }
 
-    // Mostra mensagem
-    mensagem.textContent = data.mensagem;
+    try {
+        const response = await fetch("https://safe-transfer-api-1234.onrender.com/api/validar-pix", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                chavePix: chavePix,
+                nomeInformado: nomeInformado
+            })
+        });
 
-    // Pinta de verde/vermelho conforme status
-    if (data.status === "VÁLIDO") {
-      mensagem.style.color = "green";
-    } else if (data.status === "DIVERGENTE") {
-      mensagem.style.color = "orange";
-    } else {
-      // ERRO
-      mensagem.style.color = "red";
+        if (!response.ok) {
+            const erro = await response.json();
+            resultado.textContent = erro.mensagem || "Erro ao validar chave Pix.";
+            resultado.style.color = "red";
+            return;
+        }
+
+        const data = await response.json();
+
+        // Preenche o nome real
+        campoNomeReal.value = data.nomeReal || "";
+
+        // Exibe mensagem
+        resultado.textContent = data.mensagem;
+        resultado.style.color = data.status === "VÁLIDO" ? "green" : "red";
+
+    } catch (error) {
+        resultado.textContent = "Erro de conexão com o servidor.";
+        resultado.style.color = "red";
+        console.error(error);
     }
-
-  } catch (erro) {
-    console.error("Erro ao chamar API:", erro);
-    mensagem.textContent = "Erro ao comunicar com o servidor.";
-    mensagem.style.color = "red";
-  }
 });

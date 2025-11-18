@@ -1,88 +1,57 @@
-const API_BASE = '/api';
+console.log("Script carregado e pronto.");
 
-function $(s) { return document.querySelector(s); }
+const form = document.getElementById("pixForm");
+const inputChave = document.getElementById("chave");
+const inputNomeInformado = document.getElementById("nomeInformado");
+const inputNomeReal = document.getElementById("nomeReal");
+const mensagem = document.getElementById("mensagemValidacao");
 
-async function safeJson(r) {
-  try { return await r.json(); } catch { return null; }
-}
+const API_URL = "https://safe-transfer-api-1234.onrender.com/api/validar-pix";
 
-async function validarPix(payload) {
-  const r = await fetch(`${API_BASE}/validar-pix`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
 
-  const data = await safeJson(r);
+  const chavePix = inputChave.value.trim();
+  const nomeInformado = inputNomeInformado.value.trim();
 
-  if (!r.ok) {
-    const msg =
-      data?.mensagem ||
-      data?.errors?.map(e => `${e.field}: ${e.message}`).join('\n') ||
-      data?.error ||
-      'Erro ao validar Pix';
-    throw new Error(msg);
+  mensagem.textContent = "";
+  inputNomeReal.value = "";
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        chavePix: chavePix,
+        nomeInformado: nomeInformado
+      })
+    });
+
+    const data = await response.json();
+
+    // Se vier nomeReal, preenche o campo
+    if (data.nomeReal) {
+      inputNomeReal.value = data.nomeReal;
+    }
+
+    // Mostra mensagem
+    mensagem.textContent = data.mensagem;
+
+    // Pinta de verde/vermelho conforme status
+    if (data.status === "VÁLIDO") {
+      mensagem.style.color = "green";
+    } else if (data.status === "DIVERGENTE") {
+      mensagem.style.color = "orange";
+    } else {
+      // ERRO
+      mensagem.style.color = "red";
+    }
+
+  } catch (erro) {
+    console.error("Erro ao chamar API:", erro);
+    mensagem.textContent = "Erro ao comunicar com o servidor.";
+    mensagem.style.color = "red";
   }
-
-  return data; // { status, mensagem, nomeReal }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('✅ Script carregado e pronto.');
-
-  const pixForm = $('#pixForm');
-  const chaveInput = $('#chave');
-  const nomeInput = $('#nomeInformado');
-  const nomeRealInput = $('#nomeReal');
-  const resultado = $('#resultado');
-  const historico = $('#listaHistorico');
-
-  pixForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    resultado.textContent = 'Validando...';
-    resultado.style.color = '';
-    nomeRealInput.value = '';
-
-    const chavePix = chaveInput.value.trim();
-    const nomeInformado = nomeInput.value.trim();
-
-    if (!chavePix) {
-      resultado.textContent = 'Informe a chave Pix.';
-      resultado.style.color = 'red';
-      return;
-    }
-
-    if (!nomeInformado) {
-      resultado.textContent = 'Informe o nome.';
-      resultado.style.color = 'red';
-      return;
-    }
-
-    try {
-      const resp = await validarPix({ chavePix, nomeInformado });
-      // resp = { status, mensagem, nomeReal }
-
-      // Preenche o nome real no campo de baixo
-      nomeRealInput.value = resp.nomeReal || '';
-
-      // Mostra status e mensagem
-      resultado.textContent = `${resp.status} — ${resp.mensagem}`;
-      resultado.style.color =
-        resp.status === 'VÁLIDO' ? 'green'
-      : resp.status === 'DIVERGENTE' ? 'red'
-      : 'orange';
-
-      // Adiciona ao histórico
-      if (historico) {
-        const li = document.createElement('li');
-        li.textContent = `${new Date().toLocaleString()} → ${chavePix} → ${resp.status}`;
-        historico.prepend(li);
-      }
-
-    } catch (err) {
-      resultado.textContent = err.message;
-      resultado.style.color = 'red';
-    }
-  });
 });

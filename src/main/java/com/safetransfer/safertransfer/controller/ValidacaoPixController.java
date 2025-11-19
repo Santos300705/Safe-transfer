@@ -19,7 +19,7 @@ import com.safetransfer.safertransfer.service.ValidacaoPixService;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*") // ou coloque só o domínio do front se quiser
+@CrossOrigin(origins = "https://front-lqki.onrender.com")
 public class ValidacaoPixController {
 
     private final UsuarioRepository usuarioRepository;

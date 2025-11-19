@@ -13,7 +13,6 @@ import com.safetransfer.safertransfer.dto.ValidacaoPixResponse;
 import com.safetransfer.safertransfer.repository.UsuarioRepository;
 
 @RestController
-@RequestMapping("/api")
 // pode deixar o CrossOrigin aqui ou tirar e usar só a GlobalCorsConfig
 @CrossOrigin(origins = "https://front-lqki.onrender.com")
 public class ValidacaoPixController {

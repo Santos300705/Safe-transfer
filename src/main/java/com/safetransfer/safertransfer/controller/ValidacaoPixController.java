@@ -12,17 +12,21 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.safetransfer.safertransfer.dto.ValidacaoPixRequest;
 import com.safetransfer.safertransfer.dto.ValidacaoPixResponse;
+import com.safetransfer.safertransfer.repository.UsuarioRepository;
 import com.safetransfer.safertransfer.service.ValidacaoPixService;
 
 
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*") // ou coloque só o domínio do front se quiser
 public class ValidacaoPixController {
 
-    @Autowired
-    private ValidacaoPixService validacaoPixService;
+    private final UsuarioRepository usuarioRepository;
+
+    public ValidacaoPixController(UsuarioRepository usuarioRepository) {
+        this.usuarioRepository = usuarioRepository;
+    }
 
     @PostMapping("/validar-pix")
     public ResponseEntity<ValidacaoPixResponse> validar(@Valid @RequestBody ValidacaoPixRequest req) {
@@ -31,42 +35,47 @@ public class ValidacaoPixController {
         String nomeInformado = req.getNomeInformado();
 
         if (chavePix == null || chavePix.isBlank()) {
-            return ResponseEntity.badRequest().body(
-                    new ValidacaoPixResponse("ERRO", "Chave Pix é obrigatória.", null)
+            return ResponseEntity
+                    .badRequest()
+                    .body(new ValidacaoPixResponse(
+                            "ERRO",
+                            null,
+                            "A chave Pix é obrigatória."
+                    ));
+        }
+
+        // aqui eu assumo que a chave Pix é o e-mail cadastrado
+        var usuarioOpt = usuarioRepository.findFirstByEmailIgnoreCase(chavePix);
+
+        if (usuarioOpt.isEmpty()) {
+            return ResponseEntity.ok(
+                    new ValidacaoPixResponse(
+                            "NAO_ENCONTRADO",
+                            null,
+                            "Nenhum nome encontrado para a chave Pix informada."
+                    )
             );
         }
+
+        var usuario = usuarioOpt.get();
+        String nomeReal = usuario.getNomeCompleto();
+
+        String status;
+        String mensagem;
 
         if (nomeInformado == null || nomeInformado.isBlank()) {
-            return ResponseEntity.badRequest().body(
-                    new ValidacaoPixResponse("ERRO", "Nome informado é obrigatório.", null)
-            );
+            status = "ENCONTRADO";
+            mensagem = "Chave localizada. Nome real exibido abaixo.";
+        } else if (nomeInformado.trim().equalsIgnoreCase(nomeReal.trim())) {
+            status = "VALIDO";
+            mensagem = "Nome informado confere com o nome real da chave Pix.";
+        } else {
+            status = "DIVERGENTE";
+            mensagem = "Atenção: o nome informado é diferente do nome real da chave Pix.";
         }
 
-        try {
-            // 1) Busca o nome real no banco a partir da chave Pix
-            String nomeReal = validacaoPixService.buscarNomePorChaveObrigatorio(chavePix);
-
-            // 2) Compara nome informado x nome real
-            boolean ok = validacaoPixService.nomesSaoCompativeis(nomeInformado, nomeReal);
-
-            // 3) Monta resposta
-            ValidacaoPixResponse resp = new ValidacaoPixResponse(
-                    ok ? "VÁLIDO" : "DIVERGENTE",
-                    ok ? "Nome corresponde ao titular da chave Pix."
-                       : "Nome NÃO corresponde ao titular da chave Pix.",
-                    nomeReal
-            );
-
-            return ResponseEntity.ok(resp);
-
-        } catch (IllegalArgumentException e) {
-            // chave Pix não encontrada → 400 com mensagem
-            ValidacaoPixResponse erro = new ValidacaoPixResponse(
-                    "ERRO",
-                    e.getMessage(),
-                    null
-            );
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
-        }
+        return ResponseEntity.ok(
+                new ValidacaoPixResponse(status, nomeReal, mensagem)
+        );
     }
 }

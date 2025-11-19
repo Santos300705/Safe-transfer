@@ -1,24 +1,20 @@
 package com.safetransfer.safertransfer.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.safetransfer.safertransfer.dto.ValidacaoPixRequest;
 import com.safetransfer.safertransfer.dto.ValidacaoPixResponse;
 import com.safetransfer.safertransfer.repository.UsuarioRepository;
-import com.safetransfer.safertransfer.service.ValidacaoPixService;
-
-
 
 @RestController
 @RequestMapping("/api")
+// pode deixar o CrossOrigin aqui ou tirar e usar só a GlobalCorsConfig
 @CrossOrigin(origins = "https://front-lqki.onrender.com")
 public class ValidacaoPixController {
 
@@ -28,6 +24,14 @@ public class ValidacaoPixController {
         this.usuarioRepository = usuarioRepository;
     }
 
+    // *** NOVO: responde ao preflight (OPTIONS) ***
+    @RequestMapping(value = "/validar-pix", method = RequestMethod.OPTIONS)
+    public ResponseEntity<Void> validarPixOptions() {
+        // só precisa responder 200 OK
+        return ResponseEntity.ok().build();
+    }
+
+    // POST normal da validação
     @PostMapping("/validar-pix")
     public ResponseEntity<ValidacaoPixResponse> validar(@Valid @RequestBody ValidacaoPixRequest req) {
 

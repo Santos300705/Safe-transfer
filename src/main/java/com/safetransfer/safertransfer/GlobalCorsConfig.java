@@ -1,5 +1,7 @@
 package com.safetransfer.safertransfer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
@@ -9,22 +11,19 @@ import org.springframework.web.filter.CorsFilter;
 @Configuration
 public class GlobalCorsConfig {
 
+    private static final Logger log = LoggerFactory.getLogger(GlobalCorsConfig.class);
+
     @Bean
     public CorsFilter corsFilter() {
+        log.info(">>> Registrando CORS filter global...");
+
         CorsConfiguration config = new CorsConfiguration();
-
-        // Durante o trabalho, vamos liberar geral pra testar.
-        // Se a prof quiser mais restrito depois, a gente fecha.
-        config.addAllowedOrigin("https://front-lqki.onrender.com");
-        // Se quiser testar de qualquer lugar, pode usar:
-        // config.addAllowedOriginPattern("*");
-
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
-        config.setAllowCredentials(false);
+        config.addAllowedOriginPattern("*");   // libera qualquer origem (pra testar)
+        config.addAllowedHeader("*");          // qualquer header
+        config.addAllowedMethod("*");          // GET/POST/PUT/DELETE/OPTIONS...
+        config.setAllowCredentials(false);     // sem cookies, mais simples
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // Aplica para todas as rotas da API
         source.registerCorsConfiguration("/**", config);
 
         return new CorsFilter(source);

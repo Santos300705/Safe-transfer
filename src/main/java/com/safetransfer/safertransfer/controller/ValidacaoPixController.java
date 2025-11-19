@@ -5,7 +5,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.safetransfer.safertransfer.dto.ValidacaoPixRequest;
@@ -13,8 +12,8 @@ import com.safetransfer.safertransfer.dto.ValidacaoPixResponse;
 import com.safetransfer.safertransfer.repository.UsuarioRepository;
 
 @RestController
-// pode deixar o CrossOrigin aqui ou tirar e usar só a GlobalCorsConfig
-@CrossOrigin(origins = "https://front-lqki.onrender.com")
+@RequestMapping("/api") // base: /api
+@CrossOrigin(origins = { "https://front-lqki.onrender.com" })
 public class ValidacaoPixController {
 
     private final UsuarioRepository usuarioRepository;
@@ -23,15 +22,7 @@ public class ValidacaoPixController {
         this.usuarioRepository = usuarioRepository;
     }
 
-    // *** NOVO: responde ao preflight (OPTIONS) ***
-    @RequestMapping(value = "/validar-pix", method = RequestMethod.OPTIONS)
-    public ResponseEntity<Void> validarPixOptions() {
-        // só precisa responder 200 OK
-        return ResponseEntity.ok().build();
-    }
-
-    // POST normal da validação
-    @PostMapping("/validar-pix")
+    @PostMapping("/validar-pix") // endpoint final: /api/validar-pix
     public ResponseEntity<ValidacaoPixResponse> validar(@Valid @RequestBody ValidacaoPixRequest req) {
 
         String chavePix = req.getChavePix();
@@ -47,7 +38,6 @@ public class ValidacaoPixController {
                     ));
         }
 
-        // aqui eu assumo que a chave Pix é o e-mail cadastrado
         var usuarioOpt = usuarioRepository.findFirstByEmailIgnoreCase(chavePix);
 
         if (usuarioOpt.isEmpty()) {

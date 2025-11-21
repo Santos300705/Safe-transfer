@@ -12,7 +12,7 @@ import com.safetransfer.safertransfer.dto.ValidacaoPixResponse;
 import com.safetransfer.safertransfer.repository.UsuarioRepository;
 
 @RestController
-@RequestMapping("/api") // base: /api
+@RequestMapping("/api") 
 @CrossOrigin(origins = { "https://front-lqki.onrender.com" })
 public class ValidacaoPixController {
 
@@ -22,7 +22,7 @@ public class ValidacaoPixController {
         this.usuarioRepository = usuarioRepository;
     }
 
-    @PostMapping("/validar-pix") // endpoint final: /api/validar-pix
+    @PostMapping("/validar-pix") 
     public ResponseEntity<ValidacaoPixResponse> validar(@Valid @RequestBody ValidacaoPixRequest req) {
 
         String chavePix = req.getChavePix();

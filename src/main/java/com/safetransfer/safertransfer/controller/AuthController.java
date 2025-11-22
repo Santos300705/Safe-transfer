@@ -1,19 +1,22 @@
 package com.safetransfer.safertransfer.controller;
 
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.safetransfer.safertransfer.dto.LoginRequest;
-import com.safetransfer.safertransfer.dto.RegistroRequest;
 import com.safetransfer.safertransfer.model.Usuario;
 import com.safetransfer.safertransfer.repository.UsuarioRepository;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api")
 @CrossOrigin(origins = { "https://front-lqki.onrender.com" })
 public class AuthController {
 
@@ -23,94 +26,84 @@ public class AuthController {
         this.usuarioRepository = usuarioRepository;
     }
 
-    // ========= REGISTRO =========
+    // ====== CADASTRO ======
     @PostMapping("/register")
-    public ResponseEntity<Map<String, Object>> registrar(@RequestBody RegistroRequest req) {
+    public ResponseEntity<?> register(@RequestBody Map<String, String> body) {
 
-        // validações simples
-        if (req.getEmail() == null || req.getEmail().isBlank()
-                || req.getSenha() == null || req.getSenha().isBlank()
-                || req.getNomeCompleto() == null || req.getNomeCompleto().isBlank()) {
+        String nomeCompleto = body.get("nomeCompleto");
+        String email = body.get("email");
+        String telefone = body.get("telefone"); // se não tiver campo no entity, pode ignorar
+        String senha = body.get("senha");
 
-            Map<String, Object> erro = new LinkedHashMap<>();
-            erro.put("status", "ERRO");
+        if (nomeCompleto == null || nomeCompleto.isBlank()
+                || email == null || email.isBlank()
+                || senha == null || senha.isBlank()) {
+
+            Map<String, String> erro = new HashMap<>();
             erro.put("mensagem", "Nome, e-mail e senha são obrigatórios.");
             return ResponseEntity.badRequest().body(erro);
         }
 
-        // verifica se já existe usuário com esse e-mail
-        var existente = usuarioRepository.findFirstByEmailIgnoreCase(req.getEmail());
+        // já existe e-mail?
+        Optional<Usuario> existente = usuarioRepository.findFirstByEmailIgnoreCase(email);
         if (existente.isPresent()) {
-            Map<String, Object> erro = new LinkedHashMap<>();
-            erro.put("status", "ERRO");
-            erro.put("mensagem", "Já existe usuário cadastrado com esse e-mail.");
+            Map<String, String> erro = new HashMap<>();
+            erro.put("mensagem", "Já existe um usuário cadastrado com esse e-mail.");
             return ResponseEntity.status(HttpStatus.CONFLICT).body(erro);
         }
 
-        // cria usuário
-        Usuario novo = new Usuario(
-                req.getNomeCompleto(),
-                req.getEmail(),
-                req.getSenha() // sem hash mesmo, só pro projeto
-        );
-        Usuario salvo = usuarioRepository.save(novo);
+        // cria usuário novo
+        Usuario novo = new Usuario();
+        novo.setNomeCompleto(nomeCompleto);
+        novo.setEmail(email);
+        // se o entity tiver campo telefone, descomenta:
+        // novo.setTelefone(telefone);
+        novo.setSenha(senha);
 
-        // monta resposta JSON organizada
-        Map<String, Object> usuarioResumo = new LinkedHashMap<>();
-        usuarioResumo.put("id", salvo.getId());
-        usuarioResumo.put("nome", salvo.getNomeCompleto());
-        usuarioResumo.put("email", salvo.getEmail());
+        usuarioRepository.save(novo);
 
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("status", "SUCESSO");
-        body.put("mensagem", "Usuário registrado com sucesso!");
-        body.put("usuario", usuarioResumo);
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("mensagem", "Usuário registrado com sucesso.");
+        resp.put("email", email);
 
-        // 201 Created (bonitinho pra REST)
-        return ResponseEntity.status(HttpStatus.CREATED).body(body);
+        // 201 Created
+        return ResponseEntity.status(HttpStatus.CREATED).body(resp);
     }
 
-    // ========= LOGIN =========
+    // ====== LOGIN ======
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginRequest req) {
+    public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
 
-        if (req.getEmail() == null || req.getEmail().isBlank()
-                || req.getSenha() == null || req.getSenha().isBlank()) {
+        String email = body.get("email");
+        String senha = body.get("senha");
 
-            Map<String, Object> erro = new LinkedHashMap<>();
-            erro.put("status", "ERRO");
+        if (email == null || email.isBlank()
+                || senha == null || senha.isBlank()) {
+
+            Map<String, String> erro = new HashMap<>();
             erro.put("mensagem", "E-mail e senha são obrigatórios.");
             return ResponseEntity.badRequest().body(erro);
         }
 
-        var usuarioOpt = usuarioRepository.findFirstByEmailIgnoreCase(req.getEmail());
+        Optional<Usuario> usuarioOpt = usuarioRepository.findFirstByEmailIgnoreCase(email);
         if (usuarioOpt.isEmpty()) {
-            Map<String, Object> erro = new LinkedHashMap<>();
-            erro.put("status", "ERRO");
-            erro.put("mensagem", "E-mail ou senha inválidos.");
+            Map<String, String> erro = new HashMap<>();
+            erro.put("mensagem", "Usuário não encontrado.");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(erro);
         }
 
-        var usuario = usuarioOpt.get();
-
-        // aqui só compara senha em texto puro mesmo
-        if (!usuario.getSenha().equals(req.getSenha())) {
-            Map<String, Object> erro = new LinkedHashMap<>();
-            erro.put("status", "ERRO");
-            erro.put("mensagem", "E-mail ou senha inválidos.");
+        Usuario usuario = usuarioOpt.get();
+        if (!senha.equals(usuario.getSenha())) {
+            Map<String, String> erro = new HashMap<>();
+            erro.put("mensagem", "Credenciais inválidas.");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(erro);
         }
 
-        // JSON de sucesso
-        Map<String, Object> usuarioResumo = new LinkedHashMap<>();
-        usuarioResumo.put("id", usuario.getId());
-        usuarioResumo.put("nome", usuario.getNomeCompleto());
-        usuarioResumo.put("email", usuario.getEmail());
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("mensagem", "Login realizado com sucesso.");
+        resp.put("nome", usuario.getNomeCompleto());
+        resp.put("email", usuario.getEmail());
 
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("status", "SUCESSO");
-        body.put("mensagem", "Login realizado com sucesso.");
-    
-        return ResponseEntity.ok(body);
+        return ResponseEntity.ok(resp);
     }
 }
